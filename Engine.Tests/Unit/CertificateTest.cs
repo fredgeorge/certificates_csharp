@@ -14,16 +14,31 @@ namespace Engine.Tests.Unit;
 public class CertificateTest {
     [Fact]
     public void PaidAll() {
-        var c = new Certificate("test", 100);
+        var c = new Certificate("aReason", 100);
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
+    
     [Fact]
     public void InvoiceAll() {
-        var c = new Certificate("test", 100);
+        var c = new Certificate("aReason", 100);
         c.Invoice("party", 100);
         Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
+    }
+    
+    [Fact]
+    public void CreateWithInvoice() {
+        var c = new Certificate("aReason", 100, "party");
+        Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
+        c.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
+    }
+
+    [Fact]
+    public void PartialPayment() {
+        var originalC = new Certificate("aReason", 100);
+        var newC = originalC.Pay("payer", 25);
     }
 }

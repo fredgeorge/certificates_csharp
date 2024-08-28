@@ -10,26 +10,33 @@ namespace Engine.Certificates;
 public class Certificate {
     private readonly object _reason;
     private readonly double _amountOwed;
-    private readonly double _amountPaid = 0.0;
-    private Object? _payer = null;
-    private Object? _invoiceParty = null;
+    private double _amountPaid = 0.0;
+    private object? _payer = null;
+    private object? _invoiceParty = null;
     private State _state = Initial.Instance;
 
-    public Certificate(Object reason, double amountOwed) {
+    public Certificate(object reason, double amountOwed) {
         _reason = reason;
         _amountOwed = amountOwed;
     }
 
-    public void Pay(Object payer, double newAmount) {
-        if (newAmount <= 0.0)
-            throw new ArgumentException("Amount paid must be greater than zero.");
-        _state.Pay(this, payer, _amountOwed, _amountPaid, newAmount);
+    public Certificate(object reason, double amountOwed, object invoiceParty) {
+        _reason = reason;
+        _amountOwed = amountOwed;
+        _invoiceParty = invoiceParty;
+        _state = Invoiced.Instance;
     }
 
-    public void Invoice(Object invoiceParty, double amount) {
+    public Certificate Pay(object payer, double newAmount) {
+        if (newAmount <= 0.0)
+            throw new ArgumentException("Amount paid must be greater than zero.");
+        return _state.Pay(this, payer, newAmount);
+    }
+
+    public Certificate Invoice(object invoiceParty, double amount) {
         if (amount <= 0.0)
             throw new ArgumentException("Amount paid must be greater than zero.");
-        _state.Invoice(this, invoiceParty, _amountOwed, _amountPaid, amount);
+        return _state.Invoice(this, invoiceParty, amount);
     }
 
     private State SplitOnPayment() => Replaced.Instance;
@@ -37,31 +44,31 @@ public class Certificate {
     private State SplitOnInvoice() => Replaced.Instance;
 
     private interface State {
-        void Pay(Certificate c, object payer1, double amountOwed, double amountPaid, double newAmount);
-        void Invoice(Certificate c, object invoiceParty1, double amountOwed, double amountPaid, double invoiceAmount);
+        Certificate Pay(Certificate c, object payer1, double newAmount);
+        Certificate Invoice(Certificate c, object invoiceParty, double invoiceAmount);
     }
 
     private class Initial : State {
         internal static readonly Initial Instance = new();
         private Initial() { }
 
-        public void Pay(Certificate c, object payer, double amountOwed, double amountPaid, double newAmount) {
-            if (amountOwed < newAmount)
+        public Certificate Pay(Certificate c, object payer, double newAmount) {
+            if (c._amountOwed < newAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
-            amountPaid = newAmount;
+            c._amountPaid = newAmount;
             c._payer = payer;
-            c._state = amountPaid == amountOwed ? Paid.Instance : c.SplitOnPayment();
+            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment();
+            return c;
         }
 
-        public void Invoice(Certificate c,
+        public Certificate Invoice(Certificate c,
             object invoiceParty,
-            double amountOwed,
-            double amountPaid,
             double invoiceAmount) {
-            if (amountOwed < invoiceAmount)
+            if (c._amountOwed < invoiceAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._invoiceParty = invoiceParty;
-            c._state = invoiceAmount == amountOwed ? Invoiced.Instance : c.SplitOnInvoice();
+            c._state = invoiceAmount == c._amountOwed ? Invoiced.Instance : c.SplitOnInvoice();
+            return c;
         }
     }
 
@@ -69,14 +76,12 @@ public class Certificate {
         internal static readonly Paid Instance = new();
         private Paid() { }
 
-        public void Pay(Certificate c, object payer, double amountOwed, double amountPaid, double newAmount) {
+        public Certificate Pay(Certificate c, object payer, double newAmount) {
             throw new InvalidOperationException("Certificate has already been paid.");
         }
 
-        public void Invoice(Certificate c,
+        public Certificate Invoice(Certificate c,
             object invoiceParty,
-            double amountOwed,
-            double amountPaid,
             double invoiceAmount) {
             throw new InvalidOperationException("Certificate has already been paid.");
         }
@@ -86,18 +91,17 @@ public class Certificate {
         internal static readonly Invoiced Instance = new();
         private Invoiced() { }
 
-        public void Pay(Certificate c, object payer, double amountOwed, double amountPaid, double newAmount) {
-            if (amountOwed < newAmount)
+        public Certificate Pay(Certificate c, object payer, double newAmount) {
+            if (c._amountOwed < newAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
-            amountPaid = newAmount;
+            c._amountPaid = newAmount;
             c._payer = payer;
-            c._state = amountPaid == amountOwed ? Paid.Instance : c.SplitOnPayment();
+            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment();
+            return c;
         }
 
-        public void Invoice(Certificate c,
+        public Certificate Invoice(Certificate c,
             object invoiceParty,
-            double amountOwed,
-            double amountPaid,
             double invoiceAmount) {
             throw new InvalidOperationException("Certificate has already been invoiced.");
         }
@@ -107,14 +111,12 @@ public class Certificate {
         internal static readonly Replaced Instance = new();
         private Replaced() { }
 
-        public void Pay(Certificate c, object payer, double amountOwed, double amountPaid, double newAmount) {
+        public Certificate Pay(Certificate c, object payer, double newAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
 
-        public void Invoice(Certificate c,
+        public Certificate Invoice(Certificate c,
             object invoiceParty,
-            double amountOwed,
-            double amountPaid,
             double invoiceAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
