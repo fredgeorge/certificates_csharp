@@ -4,8 +4,6 @@
  * Licensed under the MIT License; see LICENSE file in root.
  */
 
-using System.ComponentModel;
-
 namespace Engine.Certificates;
 
 // Understands a financial obligation
@@ -26,12 +24,23 @@ public class Certificate {
         _state.Pay(this, _amountOwed, _amountPaid, newAmount);
     }
 
+    public void Invoice(double amount) {
+        if (amount <= 0.0)
+            throw new ArgumentException("Amount paid must be greater than zero.");
+        _state.Invoice(this, _amountOwed, _amountPaid, amount);
+    }
+
     private State SplitOnPayment() {
+        throw new NotImplementedException();
+    }
+
+    private State SplitOnInvoice() {
         throw new NotImplementedException();
     }
 
     private interface State {
         void Pay(Certificate c, double amountOwed, double amountPaid, double newAmount);
+        void Invoice(Certificate c, double amountOwed, double amountPaid, double invoiceAmount);
     }
 
     private class Initial : State {
@@ -44,6 +53,12 @@ public class Certificate {
             amountPaid = newAmount;
             c._state = amountPaid == amountOwed ? Paid.Instance : c.SplitOnPayment();
         }
+
+        public void Invoice(Certificate c, double amountOwed, double amountPaid, double invoiceAmount) {
+            if (amountOwed < invoiceAmount)
+                throw new ArgumentException("Amount paid cannot be greater than amount owed.");
+            c._state = invoiceAmount == amountOwed ? Invoiced.Instance : c.SplitOnInvoice();
+        }
     }
 
     private class Paid : State {
@@ -53,6 +68,26 @@ public class Certificate {
         public void Pay(Certificate c, double amountOwed, double amountPaid, double newAmount) {
             throw new InvalidOperationException("Certificate has already been paid.");
         }
+
+        public void Invoice(Certificate c, double amountOwed, double amountPaid, double invoiceAmount) {
+            throw new InvalidOperationException("Certificate has already been paid.");
+        }
+    }
+
+    private class Invoiced : State {
+        internal static readonly Invoiced Instance = new();
+        private Invoiced() { }
+
+        public void Pay(Certificate c, double amountOwed, double amountPaid, double newAmount) {
+            if (amountOwed < newAmount)
+                throw new ArgumentException("Amount paid cannot be greater than amount owed.");
+            amountPaid = newAmount;
+            c._state = amountPaid == amountOwed ? Paid.Instance : c.SplitOnPayment();
+        }
+
+        public void Invoice(Certificate c, double amountOwed, double amountPaid, double invoiceAmount) {
+            throw new InvalidOperationException("Certificate has already been invoiced.");
+        }
     }
 
     private class Replaced : State {
@@ -60,6 +95,10 @@ public class Certificate {
         private Replaced() { }
 
         public void Pay(Certificate c, double amountOwed, double amountPaid, double newAmount) {
+            throw new InvalidOperationException("Certificate has been replaced with split.");
+        }
+
+        public void Invoice(Certificate c, double amountOwed, double amountPaid, double invoiceAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
     }
