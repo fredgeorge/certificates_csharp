@@ -15,15 +15,15 @@ public class CertificateTest {
     [Fact]
     public void PaidAll() {
         var c = new Certificate("test", 100);
-        c.Pay(100);
-        Assert.Throws<InvalidOperationException>(() => c.Pay(1));
+        c.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
     [Fact]
     public void InvoiceAll() {
         var c = new Certificate("test", 100);
-        c.Invoice(100);
-        Assert.Throws<InvalidOperationException>(() => c.Invoice(1));
-        c.Pay(100);
-        Assert.Throws<InvalidOperationException>(() => c.Pay(1));
+        c.Invoice("party", 100);
+        Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
+        c.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
 }
