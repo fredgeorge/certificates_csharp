@@ -39,9 +39,9 @@ public class Certificate {
         return _state.Invoice(this, invoiceParty, amount);
     }
 
-    private State SplitOnPayment() => Replaced.Instance;
+    private State SplitOnPayment(object payer, double amount) => Replaced.Instance;
 
-    private State SplitOnInvoice() => Replaced.Instance;
+    private State SplitOnInvoice(object invoiceParty, double invoiceAmount) => Replaced.Instance;
 
     private interface State {
         Certificate Pay(Certificate c, object payer1, double newAmount);
@@ -57,7 +57,7 @@ public class Certificate {
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._amountPaid = newAmount;
             c._payer = payer;
-            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment();
+            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment(payer, newAmount);
             return c;
         }
 
@@ -67,7 +67,7 @@ public class Certificate {
             if (c._amountOwed < invoiceAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._invoiceParty = invoiceParty;
-            c._state = invoiceAmount == c._amountOwed ? Invoiced.Instance : c.SplitOnInvoice();
+            c._state = invoiceAmount == c._amountOwed ? Invoiced.Instance : c.SplitOnInvoice(invoiceParty, invoiceAmount);
             return c;
         }
     }
@@ -96,7 +96,7 @@ public class Certificate {
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._amountPaid = newAmount;
             c._payer = payer;
-            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment();
+            c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment(payer, newAmount);
             return c;
         }
 
