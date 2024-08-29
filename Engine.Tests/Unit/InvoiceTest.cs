@@ -11,17 +11,17 @@ using Xunit;
 namespace Engine.Tests.Unit;
 
 // Ensures that Certificate works correctly
-public class CertificateTest {
+public class InvoiceTest {
     [Fact]
     public void PaidAll() {
-        var c = new Certificate("aReason", 100);
+        Invoice c = new BasicInvoice("aReason", 100);
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
     
     [Fact]
     public void InvoiceAll() {
-        var c = new Certificate("aReason", 100);
+        Invoice c = new BasicInvoice("aReason", 100);
         c.Invoice("party", 100);
         Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
         c.Pay("payer", 100);
@@ -30,7 +30,7 @@ public class CertificateTest {
     
     [Fact]
     public void CreateWithInvoice() {
-        var c = new Certificate("aReason", 100, "party");
+        Invoice c = new BasicInvoice("aReason", 100, "party");
         Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
@@ -38,7 +38,7 @@ public class CertificateTest {
 
     [Fact]
     public void PartialPayment() {
-        var originalC = new Certificate("aReason", 100);
-        var newC = originalC.Pay("payer", 25);
+        Invoice originalC = new BasicInvoice("aReason", 100);
+        Invoice newC = originalC.Pay("payer", 25);
     }
 }
