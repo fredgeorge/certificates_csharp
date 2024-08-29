@@ -10,20 +10,20 @@ namespace InvoiceEngine.Invoices;
 
 // Understands a financial obligation
 public class Invoice : IEnumerable<Invoice> {
-    private readonly object _reason;
+    private readonly object _service;
     private readonly double _amountOwed;
     private double _amountPaid = 0.0;
     private object? _payer = null;
     private object? _invoiceParty = null;
     private State _state = Initial.Instance;
 
-    public Invoice(object reason, double amountOwed) {
-        _reason = reason;
+    public Invoice(object service, double amountOwed) {
+        _service = service;
         _amountOwed = amountOwed;
     }
 
-    public Invoice(object reason, double amountOwed, object invoiceParty) {
-        _reason = reason;
+    public Invoice(object service, double amountOwed, object invoiceParty) {
+        _service = service;
         _amountOwed = amountOwed;
         _invoiceParty = invoiceParty;
         _state = Invoiced.Instance;
@@ -51,9 +51,18 @@ public class Invoice : IEnumerable<Invoice> {
         return GetEnumerator();
     }
 
-    private State SplitOnPayment(object payer, double amount) => new Split(new List<Invoice>());
+    private State SplitOnPayment(object payer, double amount) {
+        var paidInvoice = new Invoice(_service, amount);
+        paidInvoice.Pay(payer, amount);
+        var remainingInvoice = new Invoice(_service, _amountOwed - amount);
+        return new Split(paidInvoice, remainingInvoice);
+    }
 
-    private State SplitOnInvoice(object invoiceParty, double invoiceAmount) => new Split(new List<Invoice>());
+    private State SplitOnInvoice(object invoiceParty, double invoiceAmount) {
+        var paidInvoice = new Invoice(_service, invoiceAmount, invoiceParty);
+        var remainingInvoice = new Invoice(_service, _amountOwed - invoiceAmount);
+        return new Split(paidInvoice, remainingInvoice);
+    }
 
     private interface State {
         void Pay(Invoice c, object payer1, double newAmount);
@@ -119,10 +128,10 @@ public class Invoice : IEnumerable<Invoice> {
     }
 
     private class Split : State {
-        private readonly List<Invoice> _invoices = new();
+        private readonly List<Invoice> _invoices;
 
-        internal Split(List<Invoice> invoices) {
-            _invoices = invoices;
+        internal Split(params Invoice[] invoices) {
+            _invoices = invoices.ToList();
         }
 
         public void Pay(Invoice c, object payer, double newAmount) {
