@@ -141,9 +141,7 @@ public class Invoice : IEnumerable<Invoice> {
     private class Split : State {
         private readonly List<Invoice> _invoices;
 
-        internal Split(params Invoice[] invoices) {
-            _invoices = invoices.ToList();
-        }
+        internal Split(params Invoice[] invoices) => _invoices = invoices.ToList();
 
         public void Pay(Invoice c, object payer, double newAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
