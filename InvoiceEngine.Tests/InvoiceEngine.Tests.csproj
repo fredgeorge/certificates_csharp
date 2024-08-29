@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Engine\Engine.csproj" />
+    <ProjectReference Include="..\InvoiceEngine\InvoiceEngine.csproj" />
   </ItemGroup>
 
 </Project>

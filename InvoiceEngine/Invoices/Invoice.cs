@@ -4,7 +4,7 @@
  * Licensed under the MIT License; see LICENSE file in root.
  */
 
-namespace Engine.Invoices;
+namespace InvoiceEngine.Invoices;
 
 // Understands a financial obligation
 public class Invoice {

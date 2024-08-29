@@ -5,10 +5,10 @@
  */
 
 using System;
-using Engine.Invoices;
+using InvoiceEngine.Invoices;
 using Xunit;
 
-namespace Engine.Tests.Unit;
+namespace InvoiceEngine.Tests.Unit;
 
 // Ensures that Certificate works correctly
 public class InvoiceTest {
