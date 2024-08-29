@@ -4,10 +4,12 @@
  * Licensed under the MIT License; see LICENSE file in root.
  */
 
+using System.Collections;
+
 namespace InvoiceEngine.Invoices;
 
 // Understands a financial obligation
-public class Invoice {
+public class Invoice : IEnumerable<Invoice> {
     private readonly object _reason;
     private readonly double _amountOwed;
     private double _amountPaid = 0.0;
@@ -32,11 +34,21 @@ public class Invoice {
             throw new ArgumentException("Amount paid must be greater than zero.");
         _state.Pay(this, payer, newAmount);
     }
-    
+
     public void Bill(object invoiceParty, double amount) {
         if (amount <= 0.0)
             throw new ArgumentException("Amount paid must be greater than zero.");
         _state.Bill(this, invoiceParty, amount);
+    }
+
+    public IEnumerator<Invoice> GetEnumerator() {
+        return _state is Split split 
+            ? split.GetEnumerator() 
+            : new List<Invoice> { this }.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
     }
 
     private State SplitOnPayment(object payer, double amount) => new Split(new List<Invoice>());
@@ -66,7 +78,9 @@ public class Invoice {
             if (c._amountOwed < invoiceAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._invoiceParty = invoiceParty;
-            c._state = invoiceAmount == c._amountOwed ? Invoiced.Instance : c.SplitOnInvoice(invoiceParty, invoiceAmount);
+            c._state = invoiceAmount == c._amountOwed
+                ? Invoiced.Instance
+                : c.SplitOnInvoice(invoiceParty, invoiceAmount);
         }
     }
 
@@ -106,7 +120,7 @@ public class Invoice {
 
     private class Split : State {
         private readonly List<Invoice> _invoices = new();
-        
+
         internal Split(List<Invoice> invoices) {
             _invoices = invoices;
         }
@@ -118,5 +132,7 @@ public class Invoice {
         public void Bill(Invoice c, object invoiceParty, double invoiceAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
+
+        internal IEnumerator<Invoice> GetEnumerator() => _invoices.GetEnumerator();
     }
 }
