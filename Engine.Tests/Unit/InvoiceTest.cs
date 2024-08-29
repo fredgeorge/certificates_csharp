@@ -5,7 +5,7 @@
  */
 
 using System;
-using Engine.Certificates;
+using Engine.Invoices;
 using Xunit;
 
 namespace Engine.Tests.Unit;
@@ -14,31 +14,31 @@ namespace Engine.Tests.Unit;
 public class InvoiceTest {
     [Fact]
     public void PaidAll() {
-        Invoice c = new Invoice("aReason", 100);
-        c.Pay("payer", 100);
-        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
+        Invoice invoice = new Invoice("aReason", 100);
+        invoice.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => invoice.Pay("payer", 1));
     }
     
     [Fact]
     public void InvoiceAll() {
-        Invoice c = new Invoice("aReason", 100);
-        c.Bill("party", 100);
-        Assert.Throws<InvalidOperationException>(() => c.Bill("somebody",1));
-        c.Pay("payer", 100);
-        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
+        Invoice invoice = new Invoice("aReason", 100);
+        invoice.Bill("party", 100);
+        Assert.Throws<InvalidOperationException>(() => invoice.Bill("somebody",1));
+        invoice.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => invoice.Pay("payer", 1));
     }
     
     [Fact]
     public void CreateWithInvoice() {
-        Invoice c = new Invoice("aReason", 100, "party");
-        Assert.Throws<InvalidOperationException>(() => c.Bill("somebody",1));
-        c.Pay("payer", 100);
-        Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
+        Invoice invoice = new Invoice("aReason", 100, "party");
+        Assert.Throws<InvalidOperationException>(() => invoice.Bill("somebody",1));
+        invoice.Pay("payer", 100);
+        Assert.Throws<InvalidOperationException>(() => invoice.Pay("payer", 1));
     }
 
     [Fact]
     public void PartialPayment() {
-        Invoice originalC = new Invoice("aReason", 100);
-        Invoice newC = originalC.Pay("payer", 25);
+        var invoice = new Invoice("aReason", 100);
+        invoice.Pay("payer", 25);
     }
 }

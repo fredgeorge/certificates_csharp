@@ -4,7 +4,7 @@
  * Licensed under the MIT License; see LICENSE file in root.
  */
 
-namespace Engine.Certificates;
+namespace Engine.Invoices;
 
 // Understands a financial obligation
 public class Invoice {
@@ -27,48 +27,46 @@ public class Invoice {
         _state = Invoiced.Instance;
     }
 
-    public Invoice Pay(object payer, double newAmount) {
+    public void Pay(object payer, double newAmount) {
         if (newAmount <= 0.0)
             throw new ArgumentException("Amount paid must be greater than zero.");
-        return _state.Pay(this, payer, newAmount);
+        _state.Pay(this, payer, newAmount);
     }
     
-    public Invoice Bill(object invoiceParty, double amount) {
+    public void Bill(object invoiceParty, double amount) {
         if (amount <= 0.0)
             throw new ArgumentException("Amount paid must be greater than zero.");
-        return _state.Invoice(this, invoiceParty, amount);
+        _state.Bill(this, invoiceParty, amount);
     }
 
-    private State SplitOnPayment(object payer, double amount) => new Split();
+    private State SplitOnPayment(object payer, double amount) => new Split(new List<Invoice>());
 
-    private State SplitOnInvoice(object invoiceParty, double invoiceAmount) => new Split();
+    private State SplitOnInvoice(object invoiceParty, double invoiceAmount) => new Split(new List<Invoice>());
 
     private interface State {
-        Invoice Pay(Invoice c, object payer1, double newAmount);
-        Invoice Invoice(Invoice c, object invoiceParty, double invoiceAmount);
+        void Pay(Invoice c, object payer1, double newAmount);
+        void Bill(Invoice c, object invoiceParty, double invoiceAmount);
     }
 
     private class Initial : State {
         internal static readonly Initial Instance = new();
         private Initial() { }
 
-        public Invoice Pay(Invoice c, object payer, double newAmount) {
+        public void Pay(Invoice c, object payer, double newAmount) {
             if (c._amountOwed < newAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._amountPaid = newAmount;
             c._payer = payer;
             c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment(payer, newAmount);
-            return c;
         }
 
-        public Invoice Invoice(Invoice c,
+        public void Bill(Invoice c,
             object invoiceParty,
             double invoiceAmount) {
             if (c._amountOwed < invoiceAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._invoiceParty = invoiceParty;
             c._state = invoiceAmount == c._amountOwed ? Invoiced.Instance : c.SplitOnInvoice(invoiceParty, invoiceAmount);
-            return c;
         }
     }
 
@@ -76,11 +74,11 @@ public class Invoice {
         internal static readonly Paid Instance = new();
         private Paid() { }
 
-        public Invoice Pay(Invoice c, object payer, double newAmount) {
+        public void Pay(Invoice c, object payer, double newAmount) {
             throw new InvalidOperationException("Certificate has already been paid.");
         }
 
-        public Invoice Invoice(Invoice c,
+        public void Bill(Invoice c,
             object invoiceParty,
             double invoiceAmount) {
             throw new InvalidOperationException("Certificate has already been paid.");
@@ -91,16 +89,15 @@ public class Invoice {
         internal static readonly Invoiced Instance = new();
         private Invoiced() { }
 
-        public Invoice Pay(Invoice c, object payer, double newAmount) {
+        public void Pay(Invoice c, object payer, double newAmount) {
             if (c._amountOwed < newAmount)
                 throw new ArgumentException("Amount paid cannot be greater than amount owed.");
             c._amountPaid = newAmount;
             c._payer = payer;
             c._state = c._amountPaid == c._amountOwed ? Paid.Instance : c.SplitOnPayment(payer, newAmount);
-            return c;
         }
 
-        public Invoice Invoice(Invoice c,
+        public void Bill(Invoice c,
             object invoiceParty,
             double invoiceAmount) {
             throw new InvalidOperationException("Certificate has already been invoiced.");
@@ -108,15 +105,17 @@ public class Invoice {
     }
 
     private class Split : State {
-        internal Split() { }
+        private readonly List<Invoice> _invoices = new();
+        
+        internal Split(List<Invoice> invoices) {
+            _invoices = invoices;
+        }
 
-        public Invoice Pay(Invoice c, object payer, double newAmount) {
+        public void Pay(Invoice c, object payer, double newAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
 
-        public Invoice Invoice(Invoice c,
-            object invoiceParty,
-            double invoiceAmount) {
+        public void Bill(Invoice c, object invoiceParty, double invoiceAmount) {
             throw new InvalidOperationException("Certificate has been replaced with split.");
         }
     }
