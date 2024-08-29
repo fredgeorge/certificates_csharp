@@ -46,6 +46,8 @@ public class Invoice : IEnumerable<Invoice> {
             ? split.GetEnumerator() 
             : new List<Invoice> { this }.GetEnumerator();
     }
+    
+    public void Accept(InvoiceVisitor visitor) => _state.Accept(this, visitor);
 
     IEnumerator IEnumerable.GetEnumerator() {
         return GetEnumerator();
@@ -65,8 +67,17 @@ public class Invoice : IEnumerable<Invoice> {
     }
 
     private interface State {
-        void Pay(Invoice c, object payer1, double newAmount);
-        void Bill(Invoice c, object invoiceParty, double invoiceAmount);
+        void Pay(Invoice invoice, object payer1, double newAmount);
+        void Bill(Invoice invoice, object invoiceParty, double invoiceAmount);
+
+        void Accept(Invoice invoice, InvoiceVisitor visitor) =>
+            visitor.Visit(
+                invoice,
+                invoice._service,
+                invoice._amountOwed,
+                invoice._amountPaid,
+                invoice._payer,
+                invoice._invoiceParty);
     }
 
     private class Initial : State {
@@ -143,5 +154,23 @@ public class Invoice : IEnumerable<Invoice> {
         }
 
         internal IEnumerator<Invoice> GetEnumerator() => _invoices.GetEnumerator();
+
+        public void Accept(Invoice invoice, InvoiceVisitor visitor) {
+            visitor.PreVisit(
+                invoice,
+                invoice._service,
+                invoice._amountOwed,
+                invoice._amountPaid,
+                invoice._payer,
+                invoice._invoiceParty);
+            foreach (var childInvoice in _invoices) childInvoice.Accept(visitor);
+            visitor.PostVisit(
+                invoice,
+                invoice._service,
+                invoice._amountOwed,
+                invoice._amountPaid,
+                invoice._payer,
+                invoice._invoiceParty);
+        }
     }
 }
