@@ -14,31 +14,31 @@ namespace Engine.Tests.Unit;
 public class InvoiceTest {
     [Fact]
     public void PaidAll() {
-        Invoice c = new BasicInvoice("aReason", 100);
+        Invoice c = new Invoice("aReason", 100);
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
     
     [Fact]
     public void InvoiceAll() {
-        Invoice c = new BasicInvoice("aReason", 100);
-        c.Invoice("party", 100);
-        Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
+        Invoice c = new Invoice("aReason", 100);
+        c.Bill("party", 100);
+        Assert.Throws<InvalidOperationException>(() => c.Bill("somebody",1));
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
     
     [Fact]
     public void CreateWithInvoice() {
-        Invoice c = new BasicInvoice("aReason", 100, "party");
-        Assert.Throws<InvalidOperationException>(() => c.Invoice("somebody",1));
+        Invoice c = new Invoice("aReason", 100, "party");
+        Assert.Throws<InvalidOperationException>(() => c.Bill("somebody",1));
         c.Pay("payer", 100);
         Assert.Throws<InvalidOperationException>(() => c.Pay("payer", 1));
     }
 
     [Fact]
     public void PartialPayment() {
-        Invoice originalC = new BasicInvoice("aReason", 100);
+        Invoice originalC = new Invoice("aReason", 100);
         Invoice newC = originalC.Pay("payer", 25);
     }
 }
